@@ -7,7 +7,7 @@ const handleCastErrorDB = (err) => {
 
 const handleDuplicateFieldsDB = (err) => {
   // untuk mendapatkan string didalam quotes wkwkw
-  const keys = Object.keys(err.keyValue)[0];
+  const keys = err.errors[0].path;
   // const value = err.errmsg.match(/(["'])(?:(?=(\\?))\2.)*?\1/)[0];
   return new AppError(`${keys} telah digunakan`, 400);
 };
@@ -84,7 +84,7 @@ const sendErrorProd = (err, req, res) => {
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
-  console.log('ERROORR COKKKK', err);
+  console.log('ERROORR COKKKK', err.name);
 
   if (process.env.NODE_ENV === 'development') {
     // error yang tampil saat development
@@ -94,7 +94,8 @@ module.exports = (err, req, res, next) => {
     // misal object id ngasal
     let error = err;
     if (error.name === 'CastError') error = handleCastErrorDB(error);
-    if (error.code === 11000) error = handleDuplicateFieldsDB(error);
+    if (error.code === 'SequelizeUniqueConstraintError')
+      error = handleDuplicateFieldsDB(error);
     if (error.name === 'ValidationError')
       error = handleValidationErrorDB(error);
     if (error.name === 'JsonWebTokenError') error = handleJWTError();
